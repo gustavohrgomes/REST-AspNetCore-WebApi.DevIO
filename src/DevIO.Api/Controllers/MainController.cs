@@ -23,7 +23,7 @@ namespace DevIO.Api.Controllers
             return !_notificador.TemNotificacao();
         }
 
-        protected ActionResult CustomResponse(object result)
+        protected ActionResult CustomResponse(object result = null)
         {
             if (OperacaoInvalida())
             {
@@ -48,7 +48,7 @@ namespace DevIO.Api.Controllers
                 NotificarErroModelInvalida(modelState);
             }
 
-            return CustomResponse(modelState);
+            return CustomResponse();
         }
 
         protected void NotificarErroModelInvalida(ModelStateDictionary modelState)
