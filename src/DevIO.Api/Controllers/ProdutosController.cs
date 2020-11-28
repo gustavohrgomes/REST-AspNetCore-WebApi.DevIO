@@ -105,20 +105,20 @@ namespace DevIO.Api.Controllers
         #region Upload de arquivo com IFormFile
 
         [HttpPost("Adicionar")]
-        public async Task<ActionResult<ProdutoViewModel>> AdicionarAlternativo(ProdutoImagemViewModel produtoImagemViewModel)
+        public async Task<ActionResult<ProdutoViewModel>> AdicionarAlternativo([FromForm] ProdutoImagemViewModel produtoViewModel)
         {
             if (!ModelState.IsValid) return CustomResponse(ModelState);
 
             var imgPrefixo = Guid.NewGuid() + "_";
-            if (!await UploadArquivoAlternativo(produtoImagemViewModel.ImagemUpload, imgPrefixo))
+            if (!await UploadArquivoAlternativo(produtoViewModel.ImagemUpload, imgPrefixo))
             {
-                return CustomResponse(produtoImagemViewModel);
+                return CustomResponse(ModelState);
             }
 
-            produtoImagemViewModel.Imagem = imgPrefixo + produtoImagemViewModel.ImagemUpload.FileName;
-            await _produtoService.Adicionar(_mapper.Map<Produto>(produtoImagemViewModel));
+            produtoViewModel.Imagem = imgPrefixo + produtoViewModel.ImagemUpload.FileName;
+            await _produtoService.Adicionar(_mapper.Map<Produto>(produtoViewModel));
 
-            return CustomResponse(produtoImagemViewModel);
+            return CustomResponse(produtoViewModel);
         }
 
         [RequestSizeLimit(40000000)]
