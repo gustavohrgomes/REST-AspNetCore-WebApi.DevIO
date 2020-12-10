@@ -25,7 +25,8 @@ namespace DevIO.Api.Controllers
                                       IEnderecoRepository enderecoRepository,
                                       IFornecedorService fornecedorService,
                                       INotificador notificador,
-                                      IMapper mapper) : base(notificador)
+                                      IMapper mapper,
+                                      IUser user) : base(notificador, user)
         {
             _fornecedorRepository = fornecedorRepository;
             _enderecoRepository = enderecoRepository;
