@@ -45,6 +45,10 @@ namespace DevIO.Api
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseHsts();
+            }
 
             app.UseMvcConfig();
         }
