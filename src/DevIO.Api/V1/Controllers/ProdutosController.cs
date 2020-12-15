@@ -9,19 +9,23 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using DevIO.Business.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using DevIO.Api.Controllers;
 
-namespace DevIO.Api.Controllers
+namespace DevIO.Api.V1.Controllers
 {
-    [Route("produtos")]
+    [Authorize]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class ProdutosController : MainController
     {
         private readonly IProdutoRepository _produtoRepository;
         private readonly IProdutoService _produtoService;
         private readonly IMapper _mapper;
 
-        public ProdutosController(INotificador notificador, 
-                                  IProdutoRepository produtoRepository, 
-                                  IProdutoService produtoService, 
+        public ProdutosController(INotificador notificador,
+                                  IProdutoRepository produtoRepository,
+                                  IProdutoService produtoService,
                                   IMapper mapper,
                                   IUser user) : base(notificador, user)
         {
@@ -171,7 +175,7 @@ namespace DevIO.Api.Controllers
                 return false;
             }
 
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images" ,imgPrefixo + arquivo.FileName);
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", imgPrefixo + arquivo.FileName);
 
             if (System.IO.File.Exists(path))
             {
