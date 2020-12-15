@@ -50,8 +50,6 @@ namespace DevIO.Api.Configurations
                 };
             });
 
-
-
             return services;
         }
     }
