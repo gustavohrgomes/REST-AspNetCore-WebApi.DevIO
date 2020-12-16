@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.Swagger;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 namespace DevIO.Api
 {
@@ -35,11 +37,13 @@ namespace DevIO.Api
 
             services.WebApiConfig();
 
+            services.AddSwaggerConfig();
+
             services.ResolveDependecies();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())
             {
@@ -51,6 +55,8 @@ namespace DevIO.Api
             }
 
             app.UseMvcConfig();
+
+            app.UseSwaggerConfig(provider);
         }
     }
 }
