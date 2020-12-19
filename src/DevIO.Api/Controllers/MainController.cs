@@ -30,14 +30,14 @@ namespace DevIO.Api.Controllers
             }
         }
 
-        protected bool OperacaoInvalida()
+        protected bool OperacaoValida()
         {
             return !_notificador.TemNotificacao();
         }
 
         protected ActionResult CustomResponse(object result = null)
         {
-            if (OperacaoInvalida())
+            if (OperacaoValida())
             {
                 return Ok(new
                 {
