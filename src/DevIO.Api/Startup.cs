@@ -7,9 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.Swagger;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 namespace DevIO.Api
@@ -39,6 +36,8 @@ namespace DevIO.Api
 
             services.AddSwaggerConfig();
 
+            services.AddLoggingConfig(Configuration);
+
             services.ResolveDependecies();
         }
 
@@ -57,6 +56,8 @@ namespace DevIO.Api
             app.UseMvcConfig();
 
             app.UseSwaggerConfig(provider);
+
+            app.UseLoggingConfig();
         }
     }
 }
