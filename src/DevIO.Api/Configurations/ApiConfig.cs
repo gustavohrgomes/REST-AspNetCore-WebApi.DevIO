@@ -1,7 +1,11 @@
 ﻿using DevIO.Api.Extensions;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace DevIO.Api.Configurations
 {
@@ -31,6 +35,8 @@ namespace DevIO.Api.Configurations
                 opt.SuppressModelStateInvalidFilter = true;
             });
 
+            //services.AddHealthChecksUI();
+
             return services;
         }
 
@@ -44,6 +50,20 @@ namespace DevIO.Api.Configurations
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("/health", new HealthCheckOptions()
+                {
+                    Predicate = _ => true,
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                });
+                //endpoints.MapHealthChecksUI(options =>
+                //{
+                //    options.UIPath = "/health-ui";
+                //    options.ResourcesPath = "/health-ui-resources";
+
+                //    options.UseRelativeApiPath = false;
+                //    options.UseRelativeResourcesPath = false;
+                //    options.UseRelativeWebhookPath = false;
+                //});
             });
 
             return app;
