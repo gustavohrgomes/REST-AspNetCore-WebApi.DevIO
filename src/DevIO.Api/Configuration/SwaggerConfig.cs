@@ -1,19 +1,15 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace DevIO.Api.Configurations
+namespace DevIO.Api.Configuration
 {
     public static class SwaggerConfig
     {
@@ -23,34 +19,25 @@ namespace DevIO.Api.Configurations
             {
                 c.OperationFilter<SwaggerDefaultValues>();
 
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                var security = new Dictionary<string, IEnumerable<string>>
+                {
+                    {"Bearer", new string[] { }}
+                };
+
+                c.AddSecurityDefinition("Bearer" ,new ApiKeyScheme
                 {
                     Description = "Insira o token JWT desta maneira: Bearer {seu token}",
                     Name = "Authorization",
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey
+                    In = "header",
+                    Type = "apiKey"
                 });
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        new string[] {}
-                    }
-                }); ;
+                c.AddSecurityRequirement(security);
             });
 
             return services;
         }
+
         public static IApplicationBuilder UseSwaggerConfig(this IApplicationBuilder app, IApiVersionDescriptionProvider provider)
         {
             //app.UseMiddleware<SwaggerAuthorizedMiddleware>();
@@ -63,10 +50,10 @@ namespace DevIO.Api.Configurations
                         options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
                     }
                 });
-
             return app;
         }
     }
+
     public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
     {
         readonly IApiVersionDescriptionProvider provider;
@@ -81,15 +68,16 @@ namespace DevIO.Api.Configurations
             }
         }
 
-        static OpenApiInfo CreateInfoForApiVersion(ApiVersionDescription description)
+        static Info CreateInfoForApiVersion(ApiVersionDescription description)
         {
-            var info = new OpenApiInfo()
+            var info = new Info()
             {
                 Title = "API - desenvolvedor.io",
                 Version = description.ApiVersion.ToString(),
                 Description = "Esta API faz parte do curso REST com ASP.NET Core WebAPI.",
-                Contact = new OpenApiContact() { Name = "Eduardo Pires", Email = "contato@desenvolvedor.io" },
-                License = new OpenApiLicense() { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
+                Contact = new Contact() { Name = "Eduardo Pires", Email = "contato@desenvolvedor.io" },
+                TermsOfService = "https://opensource.org/licenses/MIT",
+                License = new License() { Name = "MIT", Url = "https://opensource.org/licenses/MIT" }
             };
 
             if (description.IsDeprecated)
@@ -100,41 +88,35 @@ namespace DevIO.Api.Configurations
             return info;
         }
     }
+
     public class SwaggerDefaultValues : IOperationFilter
     {
-        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        public void Apply(Operation operation, OperationFilterContext context)
         {
+            var apiDescription = context.ApiDescription;
+
+            operation.Deprecated = apiDescription.IsDeprecated();
+
             if (operation.Parameters == null)
             {
                 return;
             }
 
-            foreach (var parameter in operation.Parameters)
+            foreach (var parameter in operation.Parameters.OfType<NonBodyParameter>())
             {
-                var description = context.ApiDescription
-                    .ParameterDescriptions
-                    .First(p => p.Name == parameter.Name);
-
-                var routeInfo = description.RouteInfo;
-
-                operation.Deprecated = OpenApiOperation.DeprecatedDefault;
+                var description = apiDescription.ParameterDescriptions.First(p => p.Name == parameter.Name);
 
                 if (parameter.Description == null)
                 {
                     parameter.Description = description.ModelMetadata?.Description;
                 }
 
-                if (routeInfo == null)
+                if (parameter.Default == null)
                 {
-                    continue;
+                    parameter.Default = description.DefaultValue;
                 }
 
-                if (parameter.In != ParameterLocation.Path && parameter.Schema.Default == null)
-                {
-                    parameter.Schema.Default = new OpenApiString(routeInfo.DefaultValue.ToString());
-                }
-
-                parameter.Required |= !routeInfo.IsOptional;
+                parameter.Required |= description.IsRequired;
             }
         }
     }

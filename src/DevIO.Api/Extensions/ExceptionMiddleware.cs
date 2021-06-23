@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using Elmah.Io.AspNetCore;
+using Microsoft.AspNetCore.Http;
 
 namespace DevIO.Api.Extensions
 {
@@ -24,13 +23,13 @@ namespace DevIO.Api.Extensions
             }
             catch (Exception ex)
             {
-                HandleExceptionAsync(httpContext, ex);
+                await HandleExceptionAsync(httpContext, ex);
             }
         }
 
-        private static void HandleExceptionAsync(HttpContext context, Exception exception)
+        private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            //await exception.ShipAsync(context);
+            await exception.ShipAsync(context);
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         }
     }

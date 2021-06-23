@@ -1,31 +1,31 @@
 ﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 using AutoMapper;
+using DevIO.Api.Controllers;
+using DevIO.Api.Extensions;
 using DevIO.Api.ViewModels;
 using DevIO.Business.Intefaces;
-using Microsoft.AspNetCore.Mvc;
-using System.IO;
 using DevIO.Business.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
-using DevIO.Api.Controllers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DevIO.Api.V1.Controllers
 {
     [Authorize]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/[controller]")]
+    [Route("api/v{version:apiVersion}/produtos")]
     public class ProdutosController : MainController
     {
         private readonly IProdutoRepository _produtoRepository;
         private readonly IProdutoService _produtoService;
         private readonly IMapper _mapper;
 
-        public ProdutosController(INotificador notificador,
-                                  IProdutoRepository produtoRepository,
-                                  IProdutoService produtoService,
+        public ProdutosController(INotificador notificador, 
+                                  IProdutoRepository produtoRepository, 
+                                  IProdutoService produtoService, 
                                   IMapper mapper,
                                   IUser user) : base(notificador, user)
         {
@@ -50,6 +50,7 @@ namespace DevIO.Api.V1.Controllers
             return produtoViewModel;
         }
 
+        [ClaimsAuthorize("Produto", "Adicionar")]
         [HttpPost]
         public async Task<ActionResult<ProdutoViewModel>> Adicionar(ProdutoViewModel produtoViewModel)
         {
@@ -67,6 +68,7 @@ namespace DevIO.Api.V1.Controllers
             return CustomResponse(produtoViewModel);
         }
 
+        [ClaimsAuthorize("Produto", "Atualizar")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Atualizar(Guid id, ProdutoViewModel produtoViewModel)
         {
@@ -101,50 +103,9 @@ namespace DevIO.Api.V1.Controllers
             return CustomResponse(produtoViewModel);
         }
 
-        [HttpDelete("{id:guid}")]
-        public async Task<ActionResult<ProdutoViewModel>> Excluir(Guid id)
-        {
-            var produto = await ObterProduto(id);
-
-            if (produto == null) return NotFound();
-
-            await _produtoService.Remover(id);
-
-            return CustomResponse(produto);
-        }
-
-        private async Task<ProdutoViewModel> ObterProduto(Guid id)
-        {
-            return _mapper.Map<ProdutoViewModel>(await _produtoRepository.ObterProdutoFornecedor(id));
-        }
-
-        private bool UploadArquivo(string arquivo, string imgNome)
-        {
-            if (string.IsNullOrEmpty(arquivo))
-            {
-                NotificarErro("Forneça uma imagem para este produto!");
-                return false;
-            }
-
-            var imageDataByteArray = Convert.FromBase64String(arquivo);
-
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imgNome);
-
-            if (System.IO.File.Exists(filePath))
-            {
-                NotificarErro("Já existe um arquivo com este nome!");
-                return false;
-            }
-
-            System.IO.File.WriteAllBytes(filePath, imageDataByteArray);
-
-            return true;
-        }
-
-        #region Upload de arquivo com IFormFile
-
+        [ClaimsAuthorize("Produto", "Adicionar")]
         [HttpPost("Adicionar")]
-        public async Task<ActionResult<ProdutoViewModel>> AdicionarAlternativo([FromForm] ProdutoImagemViewModel produtoViewModel)
+        public async Task<ActionResult<ProdutoViewModel>> AdicionarAlternativo(ProdutoImagemViewModel produtoViewModel)
         {
             if (!ModelState.IsValid) return CustomResponse(ModelState);
 
@@ -160,13 +121,50 @@ namespace DevIO.Api.V1.Controllers
             return CustomResponse(produtoViewModel);
         }
 
+
         [RequestSizeLimit(40000000)]
+        //[DisableRequestSizeLimit]
         [HttpPost("imagem")]
         public ActionResult AdicionarImagem(IFormFile file)
         {
             return Ok(file);
         }
 
+        [ClaimsAuthorize("Produto", "Excluir")]
+        [HttpDelete("{id:guid}")]
+        public async Task<ActionResult<ProdutoViewModel>> Excluir(Guid id)
+        {
+            var produto = await ObterProduto(id);
+
+            if (produto == null) return NotFound();
+
+            await _produtoService.Remover(id);
+
+            return CustomResponse(produto);
+        }
+
+        private bool UploadArquivo(string arquivo, string imgNome)
+        {
+            if (string.IsNullOrEmpty(arquivo))
+            {
+                NotificarErro("Forneça uma imagem para este produto!");
+                return false;
+            }
+
+            var imageDataByteArray = Convert.FromBase64String(arquivo);
+
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/app/demo-webapi/src/assets", imgNome);
+
+            if (System.IO.File.Exists(filePath))
+            {
+                NotificarErro("Já existe um arquivo com este nome!");
+                return false;
+            }
+
+            System.IO.File.WriteAllBytes(filePath, imageDataByteArray);
+
+            return true;
+        }
         private async Task<bool> UploadArquivoAlternativo(IFormFile arquivo, string imgPrefixo)
         {
             if (arquivo == null || arquivo.Length == 0)
@@ -175,7 +173,7 @@ namespace DevIO.Api.V1.Controllers
                 return false;
             }
 
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", imgPrefixo + arquivo.FileName);
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/app/demo-webapi/src/assets", imgPrefixo + arquivo.FileName);
 
             if (System.IO.File.Exists(path))
             {
@@ -191,6 +189,10 @@ namespace DevIO.Api.V1.Controllers
             return true;
         }
 
-        #endregion
+
+        private async Task<ProdutoViewModel> ObterProduto(Guid id)
+        {
+            return _mapper.Map<ProdutoViewModel>(await _produtoRepository.ObterProdutoFornecedor(id));
+        }
     }
 }

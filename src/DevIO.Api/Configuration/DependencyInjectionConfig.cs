@@ -9,11 +9,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace DevIO.Api.Configurations
+namespace DevIO.Api.Configuration
 {
-    public static class DependecyInjectionConfig
+    public static class DependencyInjectionConfig
     {
-        public static IServiceCollection ResolveDependecies(this IServiceCollection services)
+        public static IServiceCollection ResolveDependencies(this IServiceCollection services)
         {
             services.AddScoped<MeuDbContext>();
             services.AddScoped<IProdutoRepository, ProdutoRepository>();
@@ -21,8 +21,8 @@ namespace DevIO.Api.Configurations
             services.AddScoped<IEnderecoRepository, EnderecoRepository>();
 
             services.AddScoped<INotificador, Notificador>();
-            services.AddScoped<IProdutoService, ProdutoService>();
             services.AddScoped<IFornecedorService, FornecedorService>();
+            services.AddScoped<IProdutoService, ProdutoService>();
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<IUser, AspNetUser>();

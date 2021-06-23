@@ -1,4 +1,10 @@
-﻿using DevIO.Api.Controllers;
+﻿using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+using DevIO.Api.Controllers;
 using DevIO.Api.Extensions;
 using DevIO.Api.ViewModels;
 using DevIO.Business.Intefaces;
@@ -7,15 +13,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DevIO.Api.V1.Controllers 
+namespace DevIO.Api.V1.Controllers
 {
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}")]
@@ -26,25 +25,25 @@ namespace DevIO.Api.V1.Controllers
         private readonly AppSettings _appSettings;
         private readonly ILogger _logger;
 
-        public AuthController(INotificador notificador,
-                              SignInManager<IdentityUser> signInManager,
-                              UserManager<IdentityUser> userManager,
+        public AuthController(INotificador notificador, 
+                              SignInManager<IdentityUser> signInManager, 
+                              UserManager<IdentityUser> userManager, 
                               IOptions<AppSettings> appSettings,
-                              IUser user,
-                              ILogger<AuthController> logger) : base(notificador, user)
+                              IUser user, ILogger<AuthController> logger) : base(notificador, user)
         {
             _signInManager = signInManager;
             _userManager = userManager;
-            _appSettings = appSettings.Value;
             _logger = logger;
+            _appSettings = appSettings.Value;
         }
 
+        //[EnableCors("Development")]
         [HttpPost("nova-conta")]
-        public async Task<ActionResult> RegistrarUsuário(RegisterUserViewModel registerUser)
+        public async Task<ActionResult> Registrar(RegisterUserViewModel registerUser)
         {
             if (!ModelState.IsValid) return CustomResponse(ModelState);
 
-            var user = new IdentityUser()
+            var user = new IdentityUser
             {
                 UserName = registerUser.Email,
                 Email = registerUser.Email,
@@ -52,7 +51,6 @@ namespace DevIO.Api.V1.Controllers
             };
 
             var result = await _userManager.CreateAsync(user, registerUser.Password);
-
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, false);
@@ -65,7 +63,7 @@ namespace DevIO.Api.V1.Controllers
 
             return CustomResponse(registerUser);
         }
-
+    
         [HttpPost("entrar")]
         public async Task<ActionResult> Login(LoginUserViewModel loginUser)
         {
@@ -75,16 +73,16 @@ namespace DevIO.Api.V1.Controllers
 
             if (result.Succeeded)
             {
-                _logger.LogInformation($"Usuário {loginUser.Email} logado com sucesso");
+                _logger.LogInformation("Usuario "+ loginUser.Email +" logado com sucesso");
                 return CustomResponse(await GerarJwt(loginUser.Email));
             }
             if (result.IsLockedOut)
             {
-                NotificarErro("Usuário temporariamente bloqueado por tentatívas inválidas");
+                NotificarErro("Usuário temporariamente bloqueado por tentativas inválidas");
                 return CustomResponse(loginUser);
             }
 
-            NotificarErro("Usuário ou senha incorretos");
+            NotificarErro("Usuário ou Senha incorretos");
             return CustomResponse(loginUser);
         }
 
@@ -128,7 +126,7 @@ namespace DevIO.Api.V1.Controllers
                 {
                     Id = user.Id,
                     Email = user.Email,
-                    Claims = claims.Select(c => new ClaimViewModel { Type = c.Type, Value = c.Value})
+                    Claims = claims.Select(c=> new ClaimViewModel{ Type = c.Type, Value = c.Value})
                 }
             };
 

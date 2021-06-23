@@ -4,7 +4,6 @@ using DevIO.Business.Intefaces;
 using DevIO.Business.Notificacoes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Logging;
 
 namespace DevIO.Api.Controllers
 {
@@ -17,8 +16,8 @@ namespace DevIO.Api.Controllers
         protected Guid UsuarioId { get; set; }
         protected bool UsuarioAutenticado { get; set; }
 
-        public MainController(INotificador notificador, 
-                              IUser appUser)
+        protected MainController(INotificador notificador, 
+                                 IUser appUser)
         {
             _notificador = notificador;
             AppUser = appUser;
@@ -49,34 +48,29 @@ namespace DevIO.Api.Controllers
             return BadRequest(new
             {
                 success = false,
-                error = _notificador.ObterNotificacoes().Select(n => n.Mensagem)
+                errors = _notificador.ObterNotificacoes().Select(n => n.Mensagem)
             });
         }
 
         protected ActionResult CustomResponse(ModelStateDictionary modelState)
         {
-            if (!modelState.IsValid)
-            {
-                NotificarErroModelInvalida(modelState);
-            }
-
+            if(!modelState.IsValid) NotificarErroModelInvalida(modelState);
             return CustomResponse();
         }
 
         protected void NotificarErroModelInvalida(ModelStateDictionary modelState)
         {
-            var errors = modelState.Values.SelectMany(e => e.Errors);
-
-            foreach (var erro in errors)
+            var erros = modelState.Values.SelectMany(e => e.Errors);
+            foreach (var erro in erros)
             {
                 var errorMsg = erro.Exception == null ? erro.ErrorMessage : erro.Exception.Message;
                 NotificarErro(errorMsg);
             }
         }
 
-        protected void NotificarErro(string erro)
+        protected void NotificarErro(string mensagem)
         {
-            _notificador.Handle(new Notificacao(erro));
+            _notificador.Handle(new Notificacao(mensagem));
         }
     }
 }
